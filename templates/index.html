@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal and RGB Feeds</title>
+    <style>
+        #feeds {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .video-feed {
+            width: 48%;
+            margin-bottom: 20px;
+        }
+        .video-feed img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Thermal and RGB Video Feeds</h1>
+    <div id="feeds">
+        <!-- RGB feed -->
+        <div class="video-feed">
+            <h2>RGB Feed</h2>
+            <img src="{{ url_for('webcam_feed') }}" alt="RGB Feed">
+        </div>
+
+        <!-- Thermal feed -->
+        <div class="video-feed">
+            <h2>Thermal Feed</h2>
+            <img src="{{ url_for('thermal_feed') }}" alt="Thermal Feed">
+        </div>
+    </div>
+</body>
+</html>
