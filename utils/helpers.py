@@ -4,6 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 
+# load environmental variables
 load_dotenv()
 
 client_id = os.getenv('CLIENT_ID')
@@ -25,6 +26,7 @@ def pixelToTemperature(pixelValue):
 def euclideanDistance(point1, point2):
     return np.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
+# get arduino iot cloud access token
 def get_access_token():
     data = {
         'grant_type': 'client_credentials',
@@ -43,6 +45,7 @@ def get_access_token():
         print(f"Error fetching access token: {e}")
         return None
 
+# buzzer activation
 def update_buzzer(state, access_token):
     url = f'{base_url}/things/{thing_id}/properties/{property_id}/publish'
     data = {'value': state}
