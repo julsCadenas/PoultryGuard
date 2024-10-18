@@ -37,6 +37,7 @@ def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
         detections = results[0].boxes  # store results inside a list
         isolatedFlags = [True] * len(detections)  # initialize isolation
         temperatures = []  # initialize array to store temperature data
+        control_relay(arduino, command='0')
 
         for i, box in enumerate(detections):
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
