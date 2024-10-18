@@ -3,9 +3,11 @@ import csv
 import os
 import numpy as np
 import threading
+import serial
+import time
 from datetime import datetime
 
-from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer
+from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer, control_relay
 
 # Set the folder to save frames that detected heat stress
 saveFolder = 'savedframes'
@@ -19,12 +21,12 @@ if not os.path.exists(csvFile):
         writer = csv.writer(file)
         writer.writerow(["Timestamp", "Frame", "Temperature"])  # columns
 
-def webcamStream(webcam, model, thermalCamera, distanceThreshold):
+def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
     access_token = get_access_token()  # Get access token for Arduino IoT
     if access_token is None:
         print("Exiting due to access token error.")
         return
-
+    
     while True:
         retWebcam, frameWebcam = webcam.read()
         if not retWebcam:
@@ -64,14 +66,17 @@ def webcamStream(webcam, model, thermalCamera, distanceThreshold):
                     temperatures.append(chickenTemperature)
 
                     # If temperature > 35 degrees, save the frame and log it
-                    if chickenTemperature > 41:
+                    if chickenTemperature > 35:
                         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                         filename = os.path.join(saveFolder, f'frame_{timestamp}.jpg')
                         cv2.imwrite(filename, frameWebcam)
+                        control_relay( arduino, command='1')
 
                         with open(csvFile, mode='a', newline='') as file:
                             writer = csv.writer(file)
                             writer.writerow([timestamp, filename, f'{chickenTemperature:.2f}'])
+                    elif chickenTemperature < 35:
+                        control_relay( arduino, command='0')
                 else:
                     temperatures.append(None)
             else:

@@ -2,6 +2,7 @@ import numpy as np
 import requests
 import time
 import os
+import serial
 from dotenv import load_dotenv
 
 # load environmental variables
@@ -64,3 +65,13 @@ def activate_buzzer(access_token):
     update_buzzer(True, access_token)  # Activate the buzzer
     time.sleep(3)  # Keep the buzzer on for 3 seconds
     update_buzzer(False, access_token)  # Deactivate the buzzer
+    
+def control_relay(arduino, command):
+    if command == '1':
+        arduino.write(b'ON\n')  # Send 'ON' command to Arduino
+        print("Relay is turned ON")
+    elif command == '0':
+        arduino.write(b'OFF\n')  # Send 'OFF' command to Arduino
+        print("Relay is turned OFF")
+    else:
+        print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")
