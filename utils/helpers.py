@@ -15,8 +15,8 @@ thing_id = os.getenv('THING_ID')
 property_id = os.getenv('PROPERTY_ID')
 
 # known temperature values for pixel values (for calibration)
-knownTemperature = np.array([10, 20, 30, 40])
-pixelValues = np.array([30, 100, 150, 255])
+knownTemperature = np.array([0, 10, 20, 30, 32, 34, 35, 35.5, 36, 36.6, 37, 37.5, 38, 38.5, 39, 39.5, 40])
+pixelValues = np.array([0, 30, 100, 150, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320])
 
 last_activation_time = 0 
 
