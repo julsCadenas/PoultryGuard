@@ -2,4 +2,5 @@
 savedframes
 templogs.csv
 .env
-*.pyc
+/utils/__pycache__
+/streams/__pycache__

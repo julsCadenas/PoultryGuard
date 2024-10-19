@@ -2,7 +2,6 @@ import numpy as np
 import requests
 import time
 import os
-import serial
 from dotenv import load_dotenv
 
 # load environmental variables
