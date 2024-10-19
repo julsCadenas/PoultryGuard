@@ -2,3 +2,4 @@
 savedframes
 templogs.csv
 .env
+*.pyc
