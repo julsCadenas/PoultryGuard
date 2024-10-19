@@ -3,11 +3,9 @@ import csv
 import os
 import numpy as np
 import threading
-import serial
-import time
 from datetime import datetime
 
-from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer, control_relay
+from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer, control_relay, send_sms
 
 # Set the folder to save frames that detected heat stress
 saveFolder = 'savedframes'
@@ -71,7 +69,8 @@ def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
                         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                         filename = os.path.join(saveFolder, f'frame_{timestamp}.jpg')
                         cv2.imwrite(filename, frameWebcam)
-                        control_relay( arduino, command='1')
+                        control_relay(arduino, command='1')
+                        send_sms(arduino, message="Heat stress detected")
 
                         with open(csvFile, mode='a', newline='') as file:
                             writer = csv.writer(file)

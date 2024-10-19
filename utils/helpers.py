@@ -75,3 +75,12 @@ def control_relay(arduino, command):
         print("Relay is turned OFF")
     else:
         print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")
+
+def send_sms(arduino, message):
+    # message = "Heat stress detected"
+    if message:
+        command = f"SMS:{message}\n"
+        arduino.write(command.encode())  # Send the custom SMS message
+        print(f"Sent SMS: {message}")
+    else:
+        print("Message cannot be empty.")
