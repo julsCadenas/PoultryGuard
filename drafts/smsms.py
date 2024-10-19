@@ -2,15 +2,14 @@ import serial
 import time
 
 # Set up serial communication with Arduino
-# Change 'COM8' to the correct port for your Arduino (e.g., '/dev/ttyUSB0' on Linux)
 try:
-    arduino = serial.Serial('COM8', 9600, timeout=1)
+    arduino = serial.Serial('COM8', 9600, timeout=0.1)
     time.sleep(2)  # Wait for the connection to establish
 except serial.SerialException as e:
     print(f"Error: Could not open serial port: {e}")
     exit(1)
 
-# Function to send command to Arduino
+# Function to control the relay
 def control_relay(command):
     if command == '1':
         arduino.write(b'ON\n')  # Send 'ON' command to Arduino
@@ -21,12 +20,11 @@ def control_relay(command):
     else:
         print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")
 
-# Function to send SMS through Arduino
+# Function to send an SMS
 def send_sms(message):
-    # message = "Heat stress detected"
     if message:
         command = f"SMS:{message}\n"
-        arduino.write(command.encode())  # Send the custom SMS message
+        arduino.write(command.encode())  # Send the SMS command to Arduino
         print(f"Sent SMS: {message}")
     else:
         print("Message cannot be empty.")
@@ -44,19 +42,17 @@ def main():
 
         if user_input.lower() == 'q':
             print("Exiting program...")
-            break  # Exit the loop if the user enters 'q'
+            break
 
         elif user_input == 's':
-            send_sms()  # Send SMS based on user input
+            send_sms("Heat stress detected")
 
         else:
-            # Control relay based on user input
             control_relay(user_input)
 
 # Run the main function
 try:
     main()
 finally:
-    # Close the serial connection gracefully
     arduino.close()
     print("Serial connection closed.")

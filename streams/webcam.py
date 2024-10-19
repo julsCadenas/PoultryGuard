@@ -35,7 +35,7 @@ def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
         detections = results[0].boxes  # store results inside a list
         isolatedFlags = [True] * len(detections)  # initialize isolation
         temperatures = []  # initialize array to store temperature data
-        control_relay(arduino, command='0')
+        # control_relay(arduino, command='0')
 
         for i, box in enumerate(detections):
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
@@ -56,7 +56,7 @@ def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
             retThermal, frameThermal = thermalCamera.read()
             if retThermal:
                 thermalImage = cv2.cvtColor(frameThermal, cv2.COLOR_BGR2GRAY)
-                # Check if the coordinates are within the camera FOV
+                # check if the coordinates are within the camera FOV
                 if (0 <= thermalX1 < thermalImage.shape[1] and 0 <= thermalY1 < thermalImage.shape[0]
                         and 0 <= thermalX2 < thermalImage.shape[1] and 0 <= thermalY2 < thermalImage.shape[0]):
                     boundingBoxThermal = thermalImage[thermalY1:thermalY2, thermalX1:thermalX2]
@@ -64,13 +64,12 @@ def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
                     chickenTemperature = pixelToTemperature(maxPixelValue)
                     temperatures.append(chickenTemperature)
 
-                    # If temperature > 35 degrees, save the frame and log it
+                    # if temperature > 35 degrees, save the frame and log it
                     if chickenTemperature > 35:
                         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                         filename = os.path.join(saveFolder, f'frame_{timestamp}.jpg')
                         cv2.imwrite(filename, frameWebcam)
                         control_relay(arduino, command='1')
-                        send_sms(arduino, message="Heat stress detected")
 
                         with open(csvFile, mode='a', newline='') as file:
                             writer = csv.writer(file)
@@ -102,10 +101,13 @@ def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
                     cv2.putText(frameWebcam, "Isolated", (x1, y1 - 20),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                     cv2.rectangle(frameWebcam, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-                    # Start a new thread to activate the buzzer
-                    threading.Thread(target=activate_buzzer, args=(access_token,)).start()
-                    print("Isolated chicken detected. Buzzer activated.")
+                    
+                    if temperatures[idx] is not None and temperatures[idx] > 35:
+                        # Start a new thread to activate the buzzer and sms
+                        message = "Heat stress detected"
+                        threading.Thread(target=activate_buzzer, args=(access_token,)).start()
+                        send_sms(arduino, message)
+                        print("Isolated chicken detected. Buzzer activated. Email and SMS sent")
 
                 if temperatures[idx] is not None:
                     # Print the temperature on top of the bounding box

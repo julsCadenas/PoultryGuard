@@ -19,6 +19,8 @@ property_id = os.getenv('PROPERTY_ID')
 knownTemperature = np.array([10, 20, 30, 40])
 pixelValues = np.array([30, 100, 150, 255])
 
+last_activation_time = 0 
+
 # numpy interpolation function to convert pixel value to temperature based on the calibration
 def pixelToTemperature(pixelValue):
     return np.interp(pixelValue, pixelValues, knownTemperature)
@@ -67,20 +69,29 @@ def activate_buzzer(access_token):
     update_buzzer(False, access_token)  # Deactivate the buzzer
     
 def control_relay(arduino, command):
+    global last_activation_time
+    current_time = time.time()  # Get the current time in seconds
+
+    # Check if enough time has passed since the last activation
+    if current_time - last_activation_time < 30:
+        print("Relay is in cooldown. Please wait before sending another command.")
+        return
+
     if command == '1':
         arduino.write(b'ON\n')  # Send 'ON' command to Arduino
         print("Relay is turned ON")
+        last_activation_time = current_time  # Update the last activation time
     elif command == '0':
         arduino.write(b'OFF\n')  # Send 'OFF' command to Arduino
         print("Relay is turned OFF")
+        last_activation_time = current_time  # Update the last activation time
     else:
         print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")
 
 def send_sms(arduino, message):
-    # message = "Heat stress detected"
     if message:
         command = f"SMS:{message}\n"
-        arduino.write(command.encode())  # Send the custom SMS message
+        arduino.write(command.encode())  # Send the SMS command to Arduino
         print(f"Sent SMS: {message}")
     else:
         print("Message cannot be empty.")
