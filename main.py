@@ -6,8 +6,6 @@ import webbrowser
 import serial
 from ultralytics import YOLO
 from flask import Flask, render_template, Response
-import subprocess
-import sys
 
 # Import functions
 from streams.thermal import thermalStream
@@ -52,9 +50,7 @@ def thermal_feed():
 
 # Flask server control in a separate thread
 def run_flask():
-    # Start a new terminal and run the Flask app
-    subprocess.Popen([sys.executable, '-m', 'flask', 'run', '--host=0.0.0.0', '--port=5000'], shell=True)
-    print("Server started")
+    app.run(host='0.0.0.0', port=5000, debug=False)
 
 # Start the server in a thread
 server_thread = None
@@ -65,6 +61,16 @@ def start_server():
         server_thread = threading.Thread(target=run_flask)
         server_thread.daemon = True
         server_thread.start()
+        print("Server started")
+
+# def stop_server():
+#     global server_thread
+#     if arduino and arduino.is_open:
+#         arduino.close()
+#     if server_thread and server_thread.is_alive():
+#         print("Stopping server (please manually kill the Flask process if still running)")
+#         # Reset the server_thread to allow it to be restarted
+#         server_thread = None
 
 def open_arduino_link():
     webbrowser.open("https://id.arduino.cc/?iss=https%3A%2F%2Flogin.arduino.cc%2F#/sso/login")
@@ -106,6 +112,10 @@ def create_gui():
     # Start Server button
     start_button = ctk.CTkButton(control_frame, text="Start Server", command=start_server)
     start_button.pack(side="top", padx=(0, 10), pady=(0, 0), expand=True) 
+
+    # Stop Server button
+    # stop_button = ctk.CTkButton(control_frame, text="Stop Server", command=stop_server)
+    # stop_button.pack(side="left", expand=True)
 
     def on_enter(e):
         arduino_link.configure(text_color=("#3B8ED0"))  # Button color
