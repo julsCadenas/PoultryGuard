@@ -9,6 +9,10 @@ except serial.SerialException as e:
     print(f"Error: Could not open serial port: {e}")
     exit(1)
 
+# Variables for phone number and message
+phone_number = "+639089367868"  # Replace this with any number you want
+message = "urmom"
+
 # Function to control the relay
 def control_relay(command):
     if command == '1':
@@ -21,13 +25,13 @@ def control_relay(command):
         print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")
 
 # Function to send an SMS
-def send_sms(message):
-    if message:
-        command = f"SMS:{message}\n"
-        arduino.write(command.encode())  # Send the SMS command to Arduino
-        print(f"Sent SMS: {message}")
+def send_sms(phone_number, message):
+    if phone_number and message:
+        command = f"SMS:{phone_number}:{message}\n"
+        arduino.write(command.encode())  # Send the phone number and SMS message to Arduino
+        print(f"Sent SMS to {phone_number}: {message}")
     else:
-        print("Message cannot be empty.")
+        print("Phone number and message cannot be empty.")
 
 # Main function to interact with the user
 def main():
@@ -45,7 +49,7 @@ def main():
             break
 
         elif user_input == 's':
-            send_sms("Heat stress detected")
+            send_sms(phone_number, message)
 
         else:
             control_relay(user_input)

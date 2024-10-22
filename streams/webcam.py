@@ -19,7 +19,7 @@ if not os.path.exists(csvFile):
         writer = csv.writer(file)
         writer.writerow(["Timestamp", "Frame", "Temperature"])  # columns
 
-def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
+def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, distanceThreshold):
     access_token = get_access_token()  # Get access token for Arduino IoT
     if access_token is None:
         print("Exiting due to access token error.")
@@ -106,7 +106,7 @@ def webcamStream(webcam, model, thermalCamera, arduino, distanceThreshold):
                         # Start a new thread to activate the buzzer and sms
                         message = "Heat stress detected"
                         threading.Thread(target=activate_buzzer, args=(access_token,)).start()
-                        send_sms(arduino, message)
+                        send_sms(arduino, message, phoneNumber)
                         print("Isolated chicken detected. Buzzer activated. Email and SMS sent")
 
                 if temperatures[idx] is not None:

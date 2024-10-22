@@ -87,10 +87,10 @@ def control_relay(arduino, command):
     else:
         print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")
 
-def send_sms(arduino, message):
-    if message:
-        command = f"SMS:{message}\n"
+def send_sms(arduino, message, phoneNumber):
+    if message and phoneNumber:
+        command = f"SMS:{phoneNumber}:{message}\n"
         arduino.write(command.encode())  # Send the SMS command to Arduino
-        print(f"Sent SMS: {message}")
+        print(f"Sent SMS to {phoneNumber}: {message}")
     else:
         print("Message cannot be empty.")
