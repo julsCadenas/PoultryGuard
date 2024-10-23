@@ -113,3 +113,15 @@ nav a:hover {
         text-align: center; 
     }
 }
+
+#status {
+    padding:0 30px;
+}
+
+#phone-number .label, #arduino-status .label, #gsm-status .label {
+    font-weight: bold;
+}
+
+#phone-number-value, #arduino-status-value, #gsm-status-value {
+    font-weight: normal; 
+}

@@ -5,7 +5,7 @@ import time
 import webbrowser
 import serial
 from ultralytics import YOLO
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, jsonify
 
 # Import functions
 from streams.thermal import thermalStream
@@ -23,16 +23,16 @@ names = model.model.names
 webcam = cv2.VideoCapture(1)
 thermalCamera = cv2.VideoCapture(0)
 
+phoneNumber = ""
+arduino_status = "Not connected"
+gsm_status = "Not connected"
+
 try:
     arduino = serial.Serial('COM8', 9600, timeout=1)
     time.sleep(2)  # Wait for the connection to establish
 except serial.SerialException as e:
     arduino = None
     print(f"Error: Could not open serial port: {e}")
-    print(f"Error connecting to Arduino: {e}")
-
-# Global variable to store the phone number
-phoneNumber = ""
 
 # Flask routes
 @app.route('/')
@@ -49,6 +49,14 @@ def thermal_feed():
     return Response(thermalStream(webcam, thermalCamera, model),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/status')
+def get_status():
+    return jsonify({
+        'phoneNumber': phoneNumber,
+        'arduinoStatus': arduino_status,
+        'gsmStatus': gsm_status
+    })
+
 # Flask server control in a separate thread
 def run_flask():
     app.run(host='0.0.0.0', port=5000, debug=False)
@@ -63,6 +71,8 @@ def start_server():
         server_thread.daemon = True
         server_thread.start()
         print('Server started')
+        time.sleep(1)  
+        webbrowser.open("http://localhost:5000")
 
 def open_arduino_link():
     webbrowser.open("https://id.arduino.cc/?iss=https%3A%2F%2Flogin.arduino.cc%2F#/sso/login")
@@ -134,6 +144,7 @@ def create_gui():
 
     # Function to update status from Arduino
     def update_status():    
+        global arduino_status, gsm_status
         while True:
             if arduino and arduino.in_waiting > 0:
                 line = arduino.readline().decode('utf-8').rstrip()
@@ -146,12 +157,17 @@ def create_gui():
 
     # Function to update GUI status safely
     def update_gui_status(line):
+        global arduino_status, gsm_status
         if "GSM" in line:
-            status_label.configure(text=f"GSM Status: {line.split(':')[-1].strip()}")
+            gsm_status = line.split(':')[-1].strip()
+            status_label.configure(text=f"GSM Status: {gsm_status}")
         elif "Arduino" in line:
-            status_label.configure(text=f"Arduino Status: {line}")
-        elif "Arduino" and "GSM" in line:
-            status_label.configure(text=f"Status: System Ready")
+            arduino_status = line.split(':')[-1].strip()
+            status_label.configure(text=f"Arduino Status: {arduino_status}")
+        elif "Arduino" in line and "GSM" in line:
+            arduino_status = "Connected"
+            gsm_status = "Connected"
+            status_label.configure(text="Status: System Ready")
         else:
             status_label.configure(text=f"Status: {line}")
 

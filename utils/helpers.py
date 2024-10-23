@@ -98,3 +98,4 @@ def send_sms(arduino, message, phoneNumber):
         print(f"Sent SMS to {phoneNumber}: {message}")
     else:
         print("Message cannot be empty.")
+
