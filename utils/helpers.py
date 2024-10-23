@@ -75,6 +75,10 @@ def control_relay(arduino, command):
     if current_time - last_activation_time < 30:
         print("Relay is in cooldown. Please wait before sending another command.")
         return
+    
+    if arduino is None:
+        print("Arduino connection is not established.")
+        return
 
     if command == '1':
         arduino.write(b'ON\n')  # Send 'ON' command to Arduino

@@ -27,8 +27,9 @@ try:
     arduino = serial.Serial('COM8', 9600, timeout=1)
     time.sleep(2)  # Wait for the connection to establish
 except serial.SerialException as e:
-    print(f"Error: Could not open serial port: {e}")
     arduino = None
+    print(f"Error: Could not open serial port: {e}")
+    print(f"Error connecting to Arduino: {e}")
 
 # Global variable to store the phone number
 phoneNumber = ""
@@ -61,16 +62,7 @@ def start_server():
         server_thread = threading.Thread(target=run_flask)
         server_thread.daemon = True
         server_thread.start()
-        print("Server started")
-
-# def stop_server():
-#     global server_thread
-#     if arduino and arduino.is_open:
-#         arduino.close()
-#     if server_thread and server_thread.is_alive():
-#         print("Stopping server (please manually kill the Flask process if still running)")
-#         # Reset the server_thread to allow it to be restarted
-#         server_thread = None
+        print('Server started')
 
 def open_arduino_link():
     webbrowser.open("https://id.arduino.cc/?iss=https%3A%2F%2Flogin.arduino.cc%2F#/sso/login")
@@ -82,7 +74,7 @@ def create_gui():
 
     # Initialize GUI window
     root = ctk.CTk()
-    root.geometry("400x300")
+    root.geometry("400x400")  # Increased height for status display
     root.title("Poultry Guard")
 
     # Frame for inputs
@@ -96,10 +88,15 @@ def create_gui():
     phone_entry = ctk.CTkEntry(input_frame, placeholder_text="Phone Number")
     phone_entry.pack(pady=(0, 10))
 
+    # Status label to display the saved phone number
+    saved_number_label = ctk.CTkLabel(input_frame, text="Saved Phone Number: Not set", text_color="white")
+    saved_number_label.pack(pady=(10, 0))
+
     def set_phone_number():
         global phoneNumber
         phoneNumber = phone_entry.get()
         print(f"Phone Number Set: {phoneNumber}")
+        saved_number_label.configure(text=f"Saved Phone Number: {phoneNumber}")  # Update label
 
     # Set Phone Number button
     set_phone_button = ctk.CTkButton(input_frame, text="Set Phone Number", command=set_phone_number)
@@ -112,10 +109,6 @@ def create_gui():
     # Start Server button
     start_button = ctk.CTkButton(control_frame, text="Start Server", command=start_server)
     start_button.pack(side="top", padx=(0, 10), pady=(0, 0), expand=True) 
-
-    # Stop Server button
-    # stop_button = ctk.CTkButton(control_frame, text="Stop Server", command=stop_server)
-    # stop_button.pack(side="left", expand=True)
 
     def on_enter(e):
         arduino_link.configure(text_color=("#3B8ED0"))  # Button color
@@ -134,6 +127,38 @@ def create_gui():
 
     close_note = ctk.CTkLabel(control_frame, text="Close the window to stop the server.", text_color="red")
     close_note.pack(pady=(0, 0))
+
+    # Status label
+    status_label = ctk.CTkLabel(root, text="Status: Not connected", text_color="white")
+    status_label.pack(pady=(10, 0))
+
+    # Function to update status from Arduino
+    def update_status():    
+        while True:
+            if arduino and arduino.in_waiting > 0:
+                line = arduino.readline().decode('utf-8').rstrip()
+                print(line)  # Print to console for debugging
+
+                # Schedule the GUI update in the main thread
+                root.after(0, update_gui_status, line)
+
+            time.sleep(1)  # Check every second
+
+    # Function to update GUI status safely
+    def update_gui_status(line):
+        if "GSM" in line:
+            status_label.configure(text=f"GSM Status: {line.split(':')[-1].strip()}")
+        elif "Arduino" in line:
+            status_label.configure(text=f"Arduino Status: {line}")
+        elif "Arduino" and "GSM" in line:
+            status_label.configure(text=f"Status: System Ready")
+        else:
+            status_label.configure(text=f"Status: Not Ready")
+
+    # Start the status update thread
+    status_thread = threading.Thread(target=update_status)
+    status_thread.daemon = True
+    status_thread.start()
 
     # Run the GUI main loop
     root.mainloop()
