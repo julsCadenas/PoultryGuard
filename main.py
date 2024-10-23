@@ -27,6 +27,8 @@ phoneNumber = ""
 arduino_status = "Not connected"
 gsm_status = "Not connected"
 
+server_thread = None
+
 try:
     arduino = serial.Serial('COM8', 9600, timeout=1)
     time.sleep(2)  # Wait for the connection to establish
@@ -61,8 +63,6 @@ def get_status():
 def run_flask():
     app.run(host='0.0.0.0', port=5000, debug=False)
 
-# Start the server in a thread
-server_thread = None
 
 def start_server():
     global server_thread
@@ -84,7 +84,7 @@ def create_gui():
 
     # Initialize GUI window
     root = ctk.CTk()
-    root.geometry("400x400")  # Increased height for status display
+    root.geometry("400x400")  
     root.title("Poultry Guard")
 
     # Frame for inputs
@@ -106,7 +106,7 @@ def create_gui():
         global phoneNumber
         phoneNumber = phone_entry.get()
         print(f"Phone Number Set: {phoneNumber}")
-        saved_number_label.configure(text=f"Saved Phone Number: {phoneNumber}")  # Update label
+        saved_number_label.configure(text=f"Saved Phone Number: {phoneNumber}")  
 
     # Set Phone Number button
     set_phone_button = ctk.CTkButton(input_frame, text="Set Phone Number", command=set_phone_number)
@@ -121,10 +121,10 @@ def create_gui():
     start_button.pack(side="top", padx=(0, 10), pady=(0, 0), expand=True) 
 
     def on_enter(e):
-        arduino_link.configure(text_color=("#3B8ED0"))  # Button color
+        arduino_link.configure(text_color=("#3B8ED0"))  
 
     def on_leave(e):
-        arduino_link.configure(text_color="white")  # Reset to label's default
+        arduino_link.configure(text_color="white")  
 
     # Replace CTkLabel with a hoverable link
     arduino_link = ctk.CTkLabel(control_frame, text="Click here to view Arduino IoT Cloud Status")
