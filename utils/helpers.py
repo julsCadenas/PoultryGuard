@@ -18,37 +18,54 @@ property_id = os.getenv('PROPERTY_ID')
 knownTemperature = np.array([0, 10, 20, 30, 32, 34, 35, 35.5, 36, 36.6, 37, 37.5, 38, 38.5, 39, 39.5, 40])
 pixelValues = np.array([0, 30, 100, 150, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320])
 
-last_activation_time = 0 
+last_activation_time = 0
+
+class AccessToken:
+    def __init__(self):
+        self.token = None
+        self.expires_at = 0  # Unix timestamp
+
+    def is_expired(self):
+        return time.time() >= self.expires_at
+
+    def set_token(self, token, expires_in):
+        self.token = token
+        self.expires_at = time.time() + expires_in
+
+# Instantiate the AccessToken class
+access_token_manager = AccessToken()
 
 # numpy interpolation function to convert pixel value to temperature based on the calibration
 def pixelToTemperature(pixelValue):
     return np.interp(pixelValue, pixelValues, knownTemperature)
 
-# function/formula to calcualte distance and effectively identify isolation
+# function/formula to calculate distance and effectively identify isolation
 def euclideanDistance(point1, point2):
     return np.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
-# get arduino iot cloud access token
+# get Arduino IoT cloud access token
 def get_access_token():
-    data = {
-        'grant_type': 'client_credentials',
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'audience': 'https://api2.arduino.cc/iot'
-    }
-    try:
-        response = requests.post(token_url, data=data)
-        response.raise_for_status()
-        token_info = response.json()
-        access_token = token_info['access_token']
-        print("Access Token:", access_token)
-        return access_token
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching access token: {e}")
-        return None
+    if access_token_manager.is_expired():
+        data = {
+            'grant_type': 'client_credentials',
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'audience': 'https://api2.arduino.cc/iot'
+        }
+        try:
+            response = requests.post(token_url, data=data)
+            response.raise_for_status()
+            token_info = response.json()
+            access_token_manager.set_token(token_info['access_token'], token_info['expires_in'])
+            print("New Access Token:", access_token_manager.token)
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching access token: {e}")
+            return None
+    return access_token_manager.token
 
 # buzzer activation
-def update_buzzer(state, access_token):
+def update_buzzer(state):
+    access_token = get_access_token()
     url = f'{base_url}/things/{thing_id}/properties/{property_id}/publish'
     data = {'value': state}
     headers = {
@@ -61,12 +78,12 @@ def update_buzzer(state, access_token):
         print(f"Buzzer {'activated' if state else 'deactivated'}!")
     except requests.exceptions.RequestException as e:
         print(f"Error updating buzzer: {e}")
-        
-def activate_buzzer(access_token):
-    update_buzzer(True, access_token)  # Activate the buzzer
+
+def activate_buzzer():
+    update_buzzer(True)  # Activate the buzzer
     time.sleep(3)  # Keep the buzzer on for 3 seconds
-    update_buzzer(False, access_token)  # Deactivate the buzzer
-    
+    update_buzzer(False)  # Deactivate the buzzer
+
 def control_relay(arduino, command):
     global last_activation_time
     current_time = time.time()  # Get the current time in seconds
@@ -98,4 +115,3 @@ def send_sms(arduino, message, phoneNumber):
         print(f"Sent SMS to {phoneNumber}: {message}")
     else:
         print("Message cannot be empty.")
-
