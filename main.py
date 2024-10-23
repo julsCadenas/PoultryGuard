@@ -153,7 +153,7 @@ def create_gui():
         elif "Arduino" and "GSM" in line:
             status_label.configure(text=f"Status: System Ready")
         else:
-            status_label.configure(text=f"Status: Not Ready")
+            status_label.configure(text=f"Status: {line}")
 
     # Start the status update thread
     status_thread = threading.Thread(target=update_status)
