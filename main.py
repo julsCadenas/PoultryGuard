@@ -26,6 +26,7 @@ thermalCamera = cv2.VideoCapture(0)
 phoneNumber = ""
 arduino_status = "Not connected"
 gsm_status = "Not connected"
+tempThreshold = 35
 
 server_thread = None
 
@@ -43,7 +44,7 @@ def index():
 
 @app.route('/webcam_feed')
 def webcam_feed():
-    return Response(webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, distanceThreshold=300),
+    return Response(webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold=300),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/thermal_feed')
@@ -84,7 +85,7 @@ def create_gui():
 
     # Initialize GUI window
     root = ctk.CTk()
-    root.geometry("400x400")  
+    root.geometry("400x500")  
     root.title("Poultry Guard")
 
     # Frame for inputs
@@ -101,7 +102,7 @@ def create_gui():
     # Status label to display the saved phone number
     saved_number_label = ctk.CTkLabel(input_frame, text="Saved Phone Number: Not set", text_color="white")
     saved_number_label.pack(pady=(10, 0))
-
+        
     def set_phone_number():
         global phoneNumber
         phoneNumber = phone_entry.get()
@@ -111,7 +112,22 @@ def create_gui():
     # Set Phone Number button
     set_phone_button = ctk.CTkButton(input_frame, text="Set Phone Number", command=set_phone_number)
     set_phone_button.pack(pady=(0, 20))
+    
+    def setTemperature():
+        global tempThreshold
+        tempThreshold = float(tempEntry.get())
+        print(f"Temperature threshold: {tempThreshold}")
+        temp_label.configure(text=f"Saved temperature threshold: {tempThreshold}")  
 
+    tempEntry = ctk.CTkEntry(input_frame, placeholder_text="Enter temperature threshold:")
+    tempEntry.pack(pady=(0, 10))
+
+    temp_label = ctk.CTkLabel(input_frame, text="Saved Temperature: Not set", text_color="white")
+    temp_label.pack(pady=(10, 0))
+
+    setTempButton = ctk.CTkButton(input_frame, text="Set Temperature", command=setTemperature)
+    setTempButton.pack(pady=(0, 20))
+    
     # Frame for server controls
     control_frame = ctk.CTkFrame(root)
     control_frame.pack(pady=10, padx=20, fill="both", expand=True)

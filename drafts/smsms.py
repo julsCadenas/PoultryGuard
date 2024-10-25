@@ -10,7 +10,7 @@ except serial.SerialException as e:
     exit(1)
 
 # Variables for phone number and message
-phone_number = "+639089367868"  # Replace this with any number you want
+phone_number = "+639762091859"  # Replace this with any number you want
 message = "urmom"
 
 # Function to control the relay
