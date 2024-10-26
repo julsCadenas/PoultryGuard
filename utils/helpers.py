@@ -7,33 +7,33 @@ from dotenv import load_dotenv
 # load environmental variables
 load_dotenv()
 
-clientId = os.getenv('CLIENT_ID')
-clientSecret = os.getenv('CLIENT_SECRET')
-tokenUrl = os.getenv('TOKEN_URL')
-baseUrl = os.getenv('BASE_URL')
-thingId = os.getenv('THING_ID')
-propertyId = os.getenv('PROPERTY_ID')
+client_id = os.getenv('CLIENT_ID')
+client_secret = os.getenv('CLIENT_SECRET')
+token_url = os.getenv('TOKEN_URL')
+base_url = os.getenv('BASE_URL')
+thing_id = os.getenv('THING_ID')
+property_id = os.getenv('PROPERTY_ID')
 
 # known temperature values for pixel values (for calibration)
 knownTemperature = np.array([0, 10, 20, 30, 32, 34, 35, 35.5, 36, 36.6, 37, 37.5, 38, 38.5, 39, 39.5, 40])
 pixelValues = np.array([0, 30, 100, 150, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320])
 
-lastActivationTime = 0
+last_activation_time = 0
 
 class AccessToken:
     def __init__(self):
         self.token = None
         self.expires_at = 0  # Unix timestamp
 
-    def isExpired(self):
+    def is_expired(self):
         return time.time() >= self.expires_at
 
-    def setToken(self, token, expires_in):
+    def set_token(self, token, expires_in):
         self.token = token
         self.expires_at = time.time() + expires_in
 
 # Instantiate the AccessToken class
-accessTokenManager = AccessToken()
+access_token_manager = AccessToken()
 
 # numpy interpolation function to convert pixel value to temperature based on the calibration
 def pixelToTemperature(pixelValue):
@@ -44,29 +44,29 @@ def euclideanDistance(point1, point2):
     return np.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
 # get Arduino IoT cloud access token
-def getAccessToken():
-    if accessTokenManager.isExpired():
+def get_access_token():
+    if access_token_manager.is_expired():
         data = {
             'grant_type': 'client_credentials',
-            'clientId': clientId,
-            'clientSecret': clientSecret,
+            'client_id': client_id,
+            'client_secret': client_secret,
             'audience': 'https://api2.arduino.cc/iot'
         }
         try:
-            response = requests.post(tokenUrl, data=data)
+            response = requests.post(token_url, data=data)
             response.raise_for_status()
             token_info = response.json()
-            accessTokenManager.setToken(token_info['access_token'], token_info['expires_in'])
-            print("New Access Token:", accessTokenManager.token)
+            access_token_manager.set_token(token_info['access_token'], token_info['expires_in'])
+            print("New Access Token:", access_token_manager.token)
         except requests.exceptions.RequestException as e:
             print(f"Error fetching access token: {e}")
             return None
-    return accessTokenManager.token
+    return access_token_manager.token
 
 # buzzer activation
-def updateBuzzer(state):
-    access_token = getAccessToken()
-    url = f'{baseUrl}/things/{thingId}/properties/{propertyId}/publish'
+def update_buzzer(state):
+    access_token = get_access_token()
+    url = f'{base_url}/things/{thing_id}/properties/{property_id}/publish'
     data = {'value': state}
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -79,17 +79,17 @@ def updateBuzzer(state):
     except requests.exceptions.RequestException as e:
         print(f"Error updating buzzer: {e}")
 
-def activateBuzzer():
-    updateBuzzer(True)  # Activate the buzzer
+def activate_buzzer():
+    update_buzzer(True)  # Activate the buzzer
     time.sleep(3)  # Keep the buzzer on for 3 seconds
-    updateBuzzer(False)  # Deactivate the buzzer
+    update_buzzer(False)  # Deactivate the buzzer
 
-def controlRelay(arduino, command):
-    global lastActivationTime
-    currentTime = time.time()  # Get the current time in seconds
+def control_relay(arduino, command):
+    global last_activation_time
+    current_time = time.time()  # Get the current time in seconds
 
     # Check if enough time has passed since the last activation
-    if currentTime - lastActivationTime < 30:
+    if current_time - last_activation_time < 30:
         print("Relay is in cooldown. Please wait before sending another command.")
         return
     
@@ -100,15 +100,15 @@ def controlRelay(arduino, command):
     if command == '1':
         arduino.write(b'ON\n')  # Send 'ON' command to Arduino
         print("Relay is turned ON")
-        lastActivationTime = currentTime  # Update the last activation time
+        last_activation_time = current_time  # Update the last activation time
     elif command == '0':
         arduino.write(b'OFF\n')  # Send 'OFF' command to Arduino
         print("Relay is turned OFF")
-        lastActivationTime = currentTime  # Update the last activation time
+        last_activation_time = current_time  # Update the last activation time
     else:
         print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")
 
-def sendSms(arduino, message, phoneNumber):
+def send_sms(arduino, message, phoneNumber):
     if message and phoneNumber:
         command = f"SMS:{phoneNumber}:{message}\n"
         arduino.write(command.encode())  # Send the SMS command to Arduino

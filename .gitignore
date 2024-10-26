@@ -4,3 +4,4 @@ templogs.csv
 .env
 /utils/__pycache__
 /streams/__pycache__
+__pycache__

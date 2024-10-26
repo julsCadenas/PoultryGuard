@@ -20,21 +20,23 @@ model = YOLO(modelPath)
 names = model.model.names
 
 # Set the cameras
-try:
-    webcam = cv2.VideoCapture(1)
-    thermalCamera = cv2.VideoCapture(0)
+webcam = cv2.VideoCapture(1)
+thermalCamera = cv2.VideoCapture(0)
+
+# check cameras
+if webcam.isOpened() and thermalCamera.isOpened():
     cameraStatus = "Cameras initialized"
-    print(cameraStatus)
-except Exception as e:
+else:
     cameraStatus = "Cameras not found"
-    print(cameraStatus)
+
+print(cameraStatus)
 
 phoneNumber = ""
 arduinoStatus = "Not connected"
 gsmStatus = "Not connected"
 tempThreshold = 35
 
-server_thread = None
+serverThread = None
 
 try:
     arduino = serial.Serial('COM8', 9600, timeout=1)
@@ -49,21 +51,22 @@ def index():
     return render_template('index.html')
 
 @app.route('/webcam_feed')
-def webcamFeed():
+def webcam_feed():
     return Response(webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold=300),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/thermal_feed')
-def thermalFeed():
+def thermal_feed():
     return Response(thermalStream(webcam, thermalCamera, model),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/status')
-def getStatus():
+def get_status():
     return jsonify({
         'phoneNumber': phoneNumber,
         'arduinoStatus': arduinoStatus,
-        'gsmStatus': gsmStatus
+        'gsmStatus': gsmStatus,
+        'tempThreshold': tempThreshold
     })
 
 # Flask server control in a separate thread
@@ -71,13 +74,14 @@ def runFlask():
     app.run(host='0.0.0.0', port=5000, debug=False)
 
 
-def startServer():
-    global server_thread
-    if server_thread is None or not server_thread.is_alive():
-        server_thread = threading.Thread(target=runFlask)
-        server_thread.daemon = True
-        server_thread.start()
+def startServer(startButton):
+    global serverThread
+    if serverThread is None or not serverThread.is_alive():
+        serverThread = threading.Thread(target=runFlask)
+        serverThread.daemon = True
+        serverThread.start()
         print('Server started')
+        startButton.configure(state="disabled")
         time.sleep(1)  
         webbrowser.open("http://localhost:5000")
 
@@ -91,13 +95,13 @@ def createGui():
 
     def checkStartButton():
         if phoneEntry.get() and tempEntry.get():
-            start_button.configure(state="normal")
+            startButton.configure(state="normal")
         else:
-            start_button.configure(state="disabled")
+            startButton.configure(state="disabled")
     
     # Initialize GUI window
     root = ctk.CTk()
-    root.geometry("400x500")  
+    root.geometry("400x520")  
     root.title("Poultry Guard")
 
     # Frame for inputs
@@ -147,8 +151,8 @@ def createGui():
     controlFrame.pack(pady=10, padx=20, fill="both", expand=True)
 
     # Start Server button
-    start_button = ctk.CTkButton(controlFrame, text="Start Server", command=startServer)
-    start_button.pack(side="top", padx=(0, 10), pady=(0, 0), expand=True) 
+    startButton = ctk.CTkButton(controlFrame, text="Start Server", command=lambda: startServer(startButton), state='disabled')
+    startButton.pack(side="top", padx=(0, 10), pady=(0, 0), expand=True) 
 
     def onEnter(e):
         arduinoLink.configure(text_color=("#3B8ED0"))  
@@ -168,9 +172,13 @@ def createGui():
     closeNote = ctk.CTkLabel(controlFrame, text="Close the window to stop the server.", text_color="red")
     closeNote.pack(pady=(0, 0))
 
+    # camera status
+    cameraLabel = ctk.CTkLabel(root, text=cameraStatus, text_color="white")
+    cameraLabel.pack(pady=(0, 0))
+    
     # Status label
     statusLabel = ctk.CTkLabel(root, text="Status: Not connected", text_color="white")
-    statusLabel.pack(pady=(10, 0))
+    statusLabel.pack(pady=(0, 0))
 
     # Function to update status from Arduino
     def updateStatus():    
