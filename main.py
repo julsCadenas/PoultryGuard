@@ -20,12 +20,18 @@ model = YOLO(modelPath)
 names = model.model.names
 
 # Set the cameras
-webcam = cv2.VideoCapture(1)
-thermalCamera = cv2.VideoCapture(0)
+try:
+    webcam = cv2.VideoCapture(1)
+    thermalCamera = cv2.VideoCapture(0)
+    cameraStatus = "Cameras initialized"
+    print(cameraStatus)
+except Exception as e:
+    cameraStatus = "Cameras not found"
+    print(cameraStatus)
 
 phoneNumber = ""
-arduino_status = "Not connected"
-gsm_status = "Not connected"
+arduinoStatus = "Not connected"
+gsmStatus = "Not connected"
 tempThreshold = 35
 
 server_thread = None
@@ -43,157 +49,165 @@ def index():
     return render_template('index.html')
 
 @app.route('/webcam_feed')
-def webcam_feed():
+def webcamFeed():
     return Response(webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold=300),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/thermal_feed')
-def thermal_feed():
+def thermalFeed():
     return Response(thermalStream(webcam, thermalCamera, model),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/status')
-def get_status():
+def getStatus():
     return jsonify({
         'phoneNumber': phoneNumber,
-        'arduinoStatus': arduino_status,
-        'gsmStatus': gsm_status
+        'arduinoStatus': arduinoStatus,
+        'gsmStatus': gsmStatus
     })
 
 # Flask server control in a separate thread
-def run_flask():
+def runFlask():
     app.run(host='0.0.0.0', port=5000, debug=False)
 
 
-def start_server():
+def startServer():
     global server_thread
     if server_thread is None or not server_thread.is_alive():
-        server_thread = threading.Thread(target=run_flask)
+        server_thread = threading.Thread(target=runFlask)
         server_thread.daemon = True
         server_thread.start()
         print('Server started')
         time.sleep(1)  
         webbrowser.open("http://localhost:5000")
 
-def open_arduino_link():
+def openArduinoLink():
     webbrowser.open("https://id.arduino.cc/?iss=https%3A%2F%2Flogin.arduino.cc%2F#/sso/login")
 
 # Create GUI with customtkinter
-def create_gui():
+def createGui():
     ctk.set_appearance_mode("dark")  # "system", "dark", "light"
     ctk.set_default_color_theme("green")  # "blue", "green", "dark-blue"
 
+    def checkStartButton():
+        if phoneEntry.get() and tempEntry.get():
+            start_button.configure(state="normal")
+        else:
+            start_button.configure(state="disabled")
+    
     # Initialize GUI window
     root = ctk.CTk()
     root.geometry("400x500")  
     root.title("Poultry Guard")
 
     # Frame for inputs
-    input_frame = ctk.CTkFrame(root)
-    input_frame.pack(pady=20, padx=20, fill="x")
+    inputFrame = ctk.CTkFrame(root)
+    inputFrame.pack(pady=20, padx=20, fill="x")
 
     # Phone Number Entry
-    phone_label = ctk.CTkLabel(input_frame, text="Enter Phone Number:")
-    phone_label.pack(pady=(10, 5))
+    phoneLabel = ctk.CTkLabel(inputFrame, text="Enter Phone Number:")
+    phoneLabel.pack(pady=(10, 5))
 
-    phone_entry = ctk.CTkEntry(input_frame, placeholder_text="Phone Number")
-    phone_entry.pack(pady=(0, 10))
+    phoneEntry = ctk.CTkEntry(inputFrame, placeholder_text="Phone Number")
+    phoneEntry.pack(pady=(0, 10))
 
     # Status label to display the saved phone number
-    saved_number_label = ctk.CTkLabel(input_frame, text="Saved Phone Number: Not set", text_color="white")
-    saved_number_label.pack(pady=(10, 0))
+    savedNumberLabel = ctk.CTkLabel(inputFrame, text="Saved Phone Number: Not set", text_color="white")
+    savedNumberLabel.pack(pady=(10, 0))
         
-    def set_phone_number():
+    def setPhoneNumber():
         global phoneNumber
-        phoneNumber = phone_entry.get()
+        phoneNumber = phoneEntry.get()
         print(f"Phone Number Set: {phoneNumber}")
-        saved_number_label.configure(text=f"Saved Phone Number: {phoneNumber}")  
+        savedNumberLabel.configure(text=f"Saved Phone Number: {phoneNumber}")  
+        checkStartButton()
 
     # Set Phone Number button
-    set_phone_button = ctk.CTkButton(input_frame, text="Set Phone Number", command=set_phone_number)
-    set_phone_button.pack(pady=(0, 20))
+    setPhoneButton = ctk.CTkButton(inputFrame, text="Set Phone Number", command=setPhoneNumber)
+    setPhoneButton.pack(pady=(0, 20))
     
     def setTemperature():
         global tempThreshold
         tempThreshold = float(tempEntry.get())
         print(f"Temperature threshold: {tempThreshold}")
-        temp_label.configure(text=f"Saved temperature threshold: {tempThreshold}")  
+        tempLabel.configure(text=f"Saved temperature threshold: {tempThreshold}")  
+        checkStartButton()
 
-    tempEntry = ctk.CTkEntry(input_frame, placeholder_text="Enter temperature threshold:")
+    tempEntry = ctk.CTkEntry(inputFrame, placeholder_text="Enter temperature threshold:")
     tempEntry.pack(pady=(0, 10))
 
-    temp_label = ctk.CTkLabel(input_frame, text="Saved Temperature: Not set", text_color="white")
-    temp_label.pack(pady=(10, 0))
+    tempLabel = ctk.CTkLabel(inputFrame, text="Saved Temperature: Not set", text_color="white")
+    tempLabel.pack(pady=(10, 0))
 
-    setTempButton = ctk.CTkButton(input_frame, text="Set Temperature", command=setTemperature)
+    setTempButton = ctk.CTkButton(inputFrame, text="Set Temperature", command=setTemperature)
     setTempButton.pack(pady=(0, 20))
     
     # Frame for server controls
-    control_frame = ctk.CTkFrame(root)
-    control_frame.pack(pady=10, padx=20, fill="both", expand=True)
+    controlFrame = ctk.CTkFrame(root)
+    controlFrame.pack(pady=10, padx=20, fill="both", expand=True)
 
     # Start Server button
-    start_button = ctk.CTkButton(control_frame, text="Start Server", command=start_server)
+    start_button = ctk.CTkButton(controlFrame, text="Start Server", command=startServer)
     start_button.pack(side="top", padx=(0, 10), pady=(0, 0), expand=True) 
 
-    def on_enter(e):
-        arduino_link.configure(text_color=("#3B8ED0"))  
+    def onEnter(e):
+        arduinoLink.configure(text_color=("#3B8ED0"))  
 
-    def on_leave(e):
-        arduino_link.configure(text_color="white")  
+    def onLeave(e):
+        arduinoLink.configure(text_color="white")  
 
     # Replace CTkLabel with a hoverable link
-    arduino_link = ctk.CTkLabel(control_frame, text="Click here to view Arduino IoT Cloud Status")
-    arduino_link.pack(pady=(0, 0))
-    arduino_link.bind("<Button-1>", lambda e: open_arduino_link())
+    arduinoLink = ctk.CTkLabel(controlFrame, text="Click here to view Arduino IoT Cloud Status")
+    arduinoLink.pack(pady=(0, 0))
+    arduinoLink.bind("<Button-1>", lambda e: openArduinoLink())
 
     # Bind hover events
-    arduino_link.bind("<Enter>", on_enter)
-    arduino_link.bind("<Leave>", on_leave)
+    arduinoLink.bind("<Enter>", onEnter)
+    arduinoLink.bind("<Leave>", onLeave)
 
-    close_note = ctk.CTkLabel(control_frame, text="Close the window to stop the server.", text_color="red")
-    close_note.pack(pady=(0, 0))
+    closeNote = ctk.CTkLabel(controlFrame, text="Close the window to stop the server.", text_color="red")
+    closeNote.pack(pady=(0, 0))
 
     # Status label
-    status_label = ctk.CTkLabel(root, text="Status: Not connected", text_color="white")
-    status_label.pack(pady=(10, 0))
+    statusLabel = ctk.CTkLabel(root, text="Status: Not connected", text_color="white")
+    statusLabel.pack(pady=(10, 0))
 
     # Function to update status from Arduino
-    def update_status():    
-        global arduino_status, gsm_status
+    def updateStatus():    
+        global arduinoStatus, gsmStatus
         while True:
             if arduino and arduino.in_waiting > 0:
                 line = arduino.readline().decode('utf-8').rstrip()
                 print(line)  # Print to console for debugging
 
                 # Schedule the GUI update in the main thread
-                root.after(0, update_gui_status, line)
+                root.after(0, updateGuiStatus, line)
 
             time.sleep(1)  # Check every second
 
     # Function to update GUI status safely
-    def update_gui_status(line):
-        global arduino_status, gsm_status
+    def updateGuiStatus(line):
+        global arduinoStatus, gsmStatus
         if "GSM" in line:
-            gsm_status = line.split(':')[-1].strip()
-            status_label.configure(text=f"GSM Status: {gsm_status}")
+            gsmStatus = line.split(':')[-1].strip()
+            statusLabel.configure(text=f"GSM Status: {gsmStatus}")
         elif "Arduino" in line:
-            arduino_status = line.split(':')[-1].strip()
-            status_label.configure(text=f"Arduino Status: {arduino_status}")
+            arduinoStatus = line.split(':')[-1].strip()
+            statusLabel.configure(text=f"Arduino Status: {arduinoStatus}")
         elif "Arduino" in line and "GSM" in line:
-            arduino_status = "Connected"
-            gsm_status = "Connected"
-            status_label.configure(text="Status: System Ready")
+            arduinoStatus = "Connected"
+            gsmStatus = "Connected"
+            statusLabel.configure(text="Status: System Ready")
         else:
-            status_label.configure(text=f"Status: {line}")
+            statusLabel.configure(text=f"Status: {line}")
 
     # Start the status update thread
-    status_thread = threading.Thread(target=update_status)
-    status_thread.daemon = True
-    status_thread.start()
+    statusThread = threading.Thread(target=updateStatus)
+    statusThread.daemon = True
+    statusThread.start()
 
     # Run the GUI main loop
     root.mainloop()
 
 if __name__ == '__main__':
-    create_gui()
+    createGui()

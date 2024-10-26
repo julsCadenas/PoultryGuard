@@ -1,11 +1,12 @@
 import cv2
 import csv
 import os
-import numpy as np
 import threading
-from datetime import datetime
 import signal
-from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer, control_relay, send_sms
+import numpy as np
+from datetime import datetime
+
+from utils.helpers import pixelToTemperature, euclideanDistance, getAccessToken, activateBuzzer, controlRelay, sendSms
 
 # Set the folder to save frames that detected heat stress
 saveFolder = 'savedframes'
@@ -23,46 +24,46 @@ if not os.path.exists(csvFile):
 videoFileName = None
 videoWriter = None
 
-def start_video_recording(frame_size, fps=20):
+def startVideoRecording(frameSize, fps=20):
     global videoFileName, videoWriter
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     videoFileName = os.path.join(saveFolder, f'webcam_{timestamp}.avi')
     
     # Define codec and create VideoWriter object (use 'XVID' or 'MJPG' for .avi file)
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    videoWriter = cv2.VideoWriter(videoFileName, fourcc, fps, frame_size)
+    videoWriter = cv2.VideoWriter(videoFileName, fourcc, fps, frameSize)
 
-def stop_video_recording():
+def stopVideoRecording():
     global videoWriter
     if videoWriter is not None:
         videoWriter.release()
         print(f"Video saved as {videoFileName}")
         videoWriter = None
 
-def signal_handler(sig, frame):
+def signalHandler(sig, frame):
     # Handle shutdown to close video recording properly
-    stop_video_recording()
+    stopVideoRecording()
     print("Application closed.")
     exit(0)
 
 # Attach signal handler to handle program exit
-signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGINT, signalHandler)
 
 def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold):
     global videoWriter
     # global tempThreshold
 
     # Get the access token for Arduino IoT
-    access_token = get_access_token()
-    if access_token is None:
+    accessToken = getAccessToken()
+    if accessToken is None:
         print("Exiting due to access token error.")
         return
 
     # Start video recording
     retWebcam, frameWebcam = webcam.read()
     if retWebcam:
-        frame_size = (frameWebcam.shape[1], frameWebcam.shape[0])
-        start_video_recording(frame_size)
+        frameSize = (frameWebcam.shape[1], frameWebcam.shape[0])
+        startVideoRecording(frameSize)
 
     while True:
         retWebcam, frameWebcam = webcam.read()
@@ -106,16 +107,16 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
                             filename = os.path.join(saveFolder, f'frame_{timestamp}.jpg')
                             cv2.imwrite(filename, frameWebcam)
                             
-                            control_relay(arduino, command='1')
-                            relay_activated = True
+                            controlRelay(arduino, command='1')
+                            relayActivated = True
                             
                         else:
-                            control_relay(arduino, command='0')
-                            relay_activated = False
+                            controlRelay(arduino, command='0')
+                            relayActivated = False
                             # Log the event that the relay was turned off
                             with open(csvFile, mode='a', newline='') as file:
                                 writer = csv.writer(file)
-                                writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", f'{chickenTemperature:.2f}', relay_activated, False, False])
+                                writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", f'{chickenTemperature:.2f}', relayActivated, False, False])
                     else:
                         print(f"Type mismatch: chickenTemperature={chickenTemperature}, tempThreshold={tempThreshold}")
                 else:
@@ -145,8 +146,8 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
 
                     if temperatures[idx] is not None and temperatures[idx] > tempThreshold:
                         message = "Heat stress detected"
-                        threading.Thread(target=activate_buzzer).start()
-                        send_sms(arduino, message, phoneNumber)
+                        threading.Thread(target=activateBuzzer).start()
+                        sendSms(arduino, message, phoneNumber)
                         print("Isolated chicken detected. Buzzer activated. SMS sent")
 
                         with open(csvFile, mode='a', newline='') as file:
@@ -173,4 +174,4 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 # Ensure the video is saved when the program exits
-stop_video_recording()
+stopVideoRecording()
