@@ -15,11 +15,42 @@ thing_id = os.getenv('THING_ID')
 property_id = os.getenv('PROPERTY_ID')
 
 # known temperature values for pixel values (for calibration)
-knownTemperature = np.array([0, 10, 20, 30, 32, 34, 35, 35.5, 36, 36.6, 37, 37.5, 38, 38.5, 39, 39.5, 40])
-pixelValues = np.array([0, 30, 100, 150, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320])
+# knownTemperature = np.array([0, 10, 20, 30, 32, 34, 35, 35.5, 36, 36.6, 37, 37.5, 38, 38.5, 39, 39.5, 40])
+# pixelValues = np.array([0, 30, 100, 150, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320])
 
 last_activation_time = 0
 
+# function to load known temperatures from a txt file
+def loadKnownTemperatures(filePath):
+    try:
+        with open(filePath, 'r') as file:
+            return np.array([float(line.strip()) for line in file if line.strip()])
+    except FileNotFoundError:
+        print(f"File not found: {filePath}")
+        return None
+
+# function to load pixel values from a txt file
+def loadPixelValues(filePath):
+    try:
+        with open(filePath, 'r') as file:
+            return np.array([float(line.strip()) for line in file if line.strip()])
+    except FileNotFoundError:
+        print(f"File not found: {filePath}")
+        return None
+
+# Load known temperatures and pixel values from their respective files
+knownTemperature = loadKnownTemperatures('known_temps.txt')
+pixelValues = loadPixelValues('pixel_values.txt')
+
+if knownTemperature is not None:
+    print("Loaded knownTemperature:", knownTemperature)
+else:
+    print("Error loading known temperatures.")
+
+if pixelValues is not None:
+    print("Loaded pixelValues:", pixelValues)
+else:
+    print("Error loading pixel values.")
 class AccessToken:
     def __init__(self):
         self.token = None
