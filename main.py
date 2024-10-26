@@ -35,6 +35,7 @@ phoneNumber = ""
 arduinoStatus = "Not connected"
 gsmStatus = "Not connected"
 tempThreshold = 35
+distanceThreshold = 300
 
 serverThread = None
 
@@ -52,7 +53,7 @@ def index():
 
 @app.route('/webcam_feed')
 def webcam_feed():
-    return Response(webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold=300),
+    return Response(webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/thermal_feed')
@@ -94,14 +95,14 @@ def createGui():
     ctk.set_default_color_theme("green")  # "blue", "green", "dark-blue"
 
     def checkStartButton():
-        if phoneEntry.get() and tempEntry.get():
+        if phoneEntry.get() and tempEntry.get() and distanceEntry.get():
             startButton.configure(state="normal")
         else:
             startButton.configure(state="disabled")
     
     # Initialize GUI window
     root = ctk.CTk()
-    root.geometry("400x520")  
+    root.geometry("400x650")  
     root.title("Poultry Guard")
 
     # Frame for inputs
@@ -137,6 +138,7 @@ def createGui():
         tempLabel.configure(text=f"Saved temperature threshold: {tempThreshold}")  
         checkStartButton()
 
+    # Temperature Threshold Entry
     tempEntry = ctk.CTkEntry(inputFrame, placeholder_text="Enter temperature threshold:")
     tempEntry.pack(pady=(0, 10))
 
@@ -146,6 +148,23 @@ def createGui():
     setTempButton = ctk.CTkButton(inputFrame, text="Set Temperature", command=setTemperature)
     setTempButton.pack(pady=(0, 20))
     
+    # Distance Threshold Entry
+    def setDistanceThreshold():
+        global distanceThreshold
+        distanceThreshold = int(distanceEntry.get())
+        print(f"Distance threshold: {distanceThreshold}")
+        distanceLabel.configure(text=f"Saved Distance Threshold: {distanceThreshold}")
+        checkStartButton()
+
+    distanceEntry = ctk.CTkEntry(inputFrame, placeholder_text="Enter distance threshold:")
+    distanceEntry.pack(pady=(0, 10))
+
+    distanceLabel = ctk.CTkLabel(inputFrame, text="Saved Distance Threshold: Not set", text_color="white")
+    distanceLabel.pack(pady=(10, 0))
+
+    setDistanceButton = ctk.CTkButton(inputFrame, text="Set Distance Threshold", command=setDistanceThreshold)
+    setDistanceButton.pack(pady=(0, 20))
+
     # Frame for server controls
     controlFrame = ctk.CTkFrame(root)
     controlFrame.pack(pady=10, padx=20, fill="both", expand=True)
@@ -216,6 +235,7 @@ def createGui():
 
     # Run the GUI main loop
     root.mainloop()
+
 
 if __name__ == '__main__':
     createGui()
