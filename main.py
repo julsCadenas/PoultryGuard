@@ -11,7 +11,7 @@ from flask import Flask, render_template, Response, jsonify
 from streams.thermal import thermalStream
 from streams.webcam import webcamStream
 
-# try push
+# try push 2nd try
 
 # Initialize the Flask server
 app = Flask(__name__)
