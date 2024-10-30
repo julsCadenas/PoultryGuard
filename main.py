@@ -12,6 +12,7 @@ from streams.thermal import thermalStream
 from streams.webcam import webcamStream
 
 # try push 2nd try
+# check mo to
 
 # Initialize the Flask server
 app = Flask(__name__)
