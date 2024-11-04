@@ -61,14 +61,14 @@ def thermal_feed():
     return Response(thermalStream(webcam, thermalCamera, model),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/status')
-def get_status():
-    return jsonify({
-        'phoneNumber': phoneNumber,
-        'arduinoStatus': arduinoStatus,
-        'gsmStatus': gsmStatus,
-        'tempThreshold': tempThreshold
-    })
+# @app.route('/status')
+# def get_status():
+#     return jsonify({
+#         'phoneNumber': phoneNumber,
+#         'arduinoStatus': arduinoStatus,
+#         'gsmStatus': gsmStatus,
+#         'tempThreshold': tempThreshold
+#     })
 
 # Flask server control in a separate thread
 def runFlask():
@@ -196,8 +196,8 @@ def createGui():
     cameraLabel.pack(pady=(0, 0))
     
     # Status label
-    statusLabel = ctk.CTkLabel(root, text="Status: Not connected", text_color="white")
-    statusLabel.pack(pady=(0, 0))
+    # statusLabel = ctk.CTkLabel(root, text="Status: Not connected", text_color="white")
+    # statusLabel.pack(pady=(0, 0))
 
     # Function to update status from Arduino
     def updateStatus():    
@@ -213,25 +213,25 @@ def createGui():
             time.sleep(1)  # Check every second
 
     # Function to update GUI status safely
-    def updateGuiStatus(line):
-        global arduinoStatus, gsmStatus
-        if "GSM" in line:
-            gsmStatus = line.split(':')[-1].strip()
-            statusLabel.configure(text=f"GSM Status: {gsmStatus}")
-        elif "Arduino" in line:
-            arduinoStatus = line.split(':')[-1].strip()
-            statusLabel.configure(text=f"Arduino Status: {arduinoStatus}")
-        elif "Arduino" in line and "GSM" in line:
-            arduinoStatus = "Connected"
-            gsmStatus = "Connected"
-            statusLabel.configure(text="Status: System Ready")
-        else:
-            statusLabel.configure(text=f"Status: {line}")
+    # def updateGuiStatus(line):
+    #     global arduinoStatus, gsmStatus
+    #     if "GSM" in line:
+    #         gsmStatus = line.split(':')[-1].strip()
+    #         statusLabel.configure(text=f"GSM Status: {gsmStatus}")
+    #     elif "Arduino" in line:
+    #         arduinoStatus = line.split(':')[-1].strip()
+    #         statusLabel.configure(text=f"Arduino Status: {arduinoStatus}")
+    #     elif "Arduino" in line and "GSM" in line:
+    #         arduinoStatus = "Connected"
+    #         gsmStatus = "Connected"
+    #         statusLabel.configure(text="Status: System Ready")
+    #     else:
+    #         statusLabel.configure(text=f"Status: {line}")
 
     # Start the status update thread
-    statusThread = threading.Thread(target=updateStatus)
-    statusThread.daemon = True
-    statusThread.start()
+    # statusThread = threading.Thread(target=updateStatus)
+    # statusThread.daemon = True
+    # statusThread.start()
 
     # Run the GUI main loop
     root.mainloop()

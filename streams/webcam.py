@@ -5,7 +5,7 @@ import numpy as np
 import threading
 from datetime import datetime
 import signal
-from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer, control_relay, send_sms
+from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer, control_relay
 
 # Set the folder to save frames that detected heat stress
 saveFolder = 'savedframes'
@@ -146,7 +146,7 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
                     if temperatures[idx] is not None and temperatures[idx] > tempThreshold:
                         message = "Heat stress detected"
                         threading.Thread(target=activate_buzzer).start()
-                        send_sms(arduino, message, phoneNumber)
+                        # send_sms(arduino, message, phoneNumber)
                         print("Isolated chicken detected. Buzzer activated. SMS sent")
 
                         with open(csvFile, mode='a', newline='') as file:
