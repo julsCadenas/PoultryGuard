@@ -202,17 +202,17 @@ def createGui():
     # statusLabel.pack(pady=(0, 0))
 
     # Function to update status from Arduino
-    def updateStatus():    
-        global arduinoStatus, gsmStatus
-        while True:
-            if arduino and arduino.in_waiting > 0:
-                line = arduino.readline().decode('utf-8').rstrip()
-                print(line)  # Print to console for debugging
+    # def updateStatus():    
+    #     global arduinoStatus, gsmStatus
+    #     while True:
+    #         if arduino and arduino.in_waiting > 0:
+    #             line = arduino.readline().decode('utf-8').rstrip()
+    #             print(line)  # Print to console for debugging
 
-                # Schedule the GUI update in the main thread
-                root.after(0, updateGuiStatus, line)
+    #             # Schedule the GUI update in the main thread
+    #             root.after(0, updateGuiStatus, line)
 
-            time.sleep(1)  # Check every second
+    #         time.sleep(1)  # Check every second
 
     # Function to update GUI status safely
     # def updateGuiStatus(line):
