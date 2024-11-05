@@ -5,6 +5,7 @@ import numpy as np
 import threading
 from datetime import datetime
 import signal
+import time
 from utils.helpers import pixelToTemperature, euclideanDistance, get_access_token, activate_buzzer, control_relay
 
 # Set the folder to save frames that detected heat stress
@@ -22,6 +23,11 @@ if not os.path.exists(csvFile):
 # Video writer initialization
 videoFileName = None
 videoWriter = None
+
+# Relay cooldown management
+relay_cooldown = 5  # Cooldown period in seconds
+last_activation_time = time.time() - relay_cooldown  # Initialize to allow immediate activation
+relay_activated = False
 
 def start_video_recording(frame_size, fps=20):
     global videoFileName, videoWriter
@@ -106,16 +112,25 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
                             filename = os.path.join(saveFolder, f'frame_{timestamp}.jpg')
                             cv2.imwrite(filename, frameWebcam)
                             
-                            control_relay(arduino, command='1')
-                            relay_activated = True
+                            # control_relay(arduino, command='1')
+                            current_time = time.time()
+                            if (current_time - last_activation_time >= relay_cooldown) and not relay_activated:
+                                arduino.write(b'1\n')  # Send command to turn ON relay
+                                print("Chicken detected. Relay ON.")
+                                last_activation_time = current_time  # Update last activation time                            
+                                relay_activated = True
                             
                         else:
-                            control_relay(arduino, command='0')
+                            # control_relay(arduino, command='0')
+                            arduino.write(b'0\n')  # Send command to turn OFF relay
+                            print("Relay OFF.")
                             relay_activated = False
-                            # Log the event that the relay was turned off
-                            with open(csvFile, mode='a', newline='') as file:
-                                writer = csv.writer(file)
-                                writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", f'{chickenTemperature:.2f}', relay_activated, False, False])
+                            
+                        # Log the event that the relay was turned off
+                        with open(csvFile, mode='a', newline='') as file:
+                            writer = csv.writer(file)
+                            writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", f'{chickenTemperature:.2f}', relay_activated, False, False])
+                    
                     else:
                         print(f"Type mismatch: chickenTemperature={chickenTemperature}, tempThreshold={tempThreshold}")
                 else:
