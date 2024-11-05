@@ -129,11 +129,11 @@ def control_relay(arduino, command):
         return
 
     if command == '1':
-        arduino.write(b'ON\n')  # Send 'ON' command to Arduino
+        arduino.write(b'1\n')  # Send 'ON' command to Arduino
         print("Relay is turned ON")
         last_activation_time = current_time  # Update the last activation time
     elif command == '0':
-        arduino.write(b'OFF\n')  # Send 'OFF' command to Arduino
+        arduino.write(b'0\n')  # Send 'OFF' command to Arduino
         print("Relay is turned OFF")
         last_activation_time = current_time  # Update the last activation time
     else:

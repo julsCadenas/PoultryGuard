@@ -37,10 +37,10 @@ void loop() {
       phoneNumber = command.substring(firstColon + 1, secondColon);  // Extract phone number
       message = command.substring(secondColon + 1);  // Extract the SMS message
       SendMessage(phoneNumber, message);  // Send the message
-    } else if (command == "ON") {
+    } else if (command == "1") {
       digitalWrite(relay, HIGH);  // Turn the relay ON
       Serial.println("Relay is ON");
-    } else if (command == "OFF") {
+    } else if (command == "0") {
       digitalWrite(relay, LOW);  // Turn the relay OFF
       Serial.println("Relay is OFF");
     } else {

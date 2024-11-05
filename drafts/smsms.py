@@ -16,10 +16,10 @@ message = "urmom"
 # Function to control the relay
 def control_relay(command):
     if command == '1':
-        arduino.write(b'ON\n')  # Send 'ON' command to Arduino
+        arduino.write(b'1\n')  # Send 'ON' command to Arduino
         print("Relay is turned ON")
     elif command == '0':
-        arduino.write(b'OFF\n')  # Send 'OFF' command to Arduino
+        arduino.write(b'0\n')  # Send 'OFF' command to Arduino
         print("Relay is turned OFF")
     else:
         print("Invalid input. Please enter 1 to turn ON or 0 to turn OFF.")

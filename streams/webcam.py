@@ -55,7 +55,7 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold):
-    global videoWriter
+    global videoWriter, last_activation_time, relay_activated
     # global tempThreshold
 
     # Get the access token for Arduino IoT
@@ -80,6 +80,9 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
         detections = results[0].boxes
         isolatedFlags = [True] * len(detections)
         temperatures = []
+
+        # Initialize high_temp_detected flag
+        high_temp_detected = False
 
         for i, box in enumerate(detections):
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
@@ -108,25 +111,12 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
 
                     if isinstance(chickenTemperature, (int, float)) and isinstance(tempThreshold, (int, float)):
                         if chickenTemperature > tempThreshold:
+                            high_temp_detected = True  # Flag to keep the relay on
                             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                             filename = os.path.join(saveFolder, f'frame_{timestamp}.jpg')
                             cv2.imwrite(filename, frameWebcam)
-                            
-                            # control_relay(arduino, command='1')
-                            current_time = time.time()
-                            if (current_time - last_activation_time >= relay_cooldown) and not relay_activated:
-                                arduino.write(b'1\n')  # Send command to turn ON relay
-                                print("Chicken detected. Relay ON.")
-                                last_activation_time = current_time  # Update last activation time                            
-                                relay_activated = True
-                            
-                        else:
-                            # control_relay(arduino, command='0')
-                            arduino.write(b'0\n')  # Send command to turn OFF relay
-                            print("Relay OFF.")
-                            relay_activated = False
-                            
-                        # Log the event that the relay was turned off
+
+                        # Log the event
                         with open(csvFile, mode='a', newline='') as file:
                             writer = csv.writer(file)
                             writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", f'{chickenTemperature:.2f}', relay_activated, False, False])
@@ -137,6 +127,20 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
                     temperatures.append(None)
             else:
                 temperatures.append(None)
+
+        # Relay activation based on high_temp_detected flag
+        current_time = time.time()
+        if high_temp_detected:
+            if (current_time - last_activation_time >= relay_cooldown) and not relay_activated:
+                arduino.write(b'1\n')  # Turn ON relay
+                print("High temperature detected. Relay ON.")
+                last_activation_time = current_time
+                relay_activated = True
+        else:
+            if relay_activated:
+                arduino.write(b'0\n')  # Turn OFF relay
+                print("Relay OFF.")
+                relay_activated = False
 
         # Checking for isolation and adding related text
         if len(detections) == len(temperatures):
