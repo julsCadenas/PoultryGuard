@@ -121,8 +121,18 @@ def update_property(property_id, value):
         print(f"Failed to update property {property_id}. Status code: {response.status_code}")
         print(response.text)
 
+last_sms_time = 0
+
 # Function to send an SMS by updating the variables in the Cloud
 def send_sms(recipient_number, message):
+    global last_sms_time
+    current_time = time.time()
+    
+    # Check if enough time has passed since the last SMS
+    if current_time - last_sms_time < 30:
+        print("SMS cooldown active. Please wait before sending another SMS.")
+        return
+    
     # Update recipient number and message in IoT Cloud
     print(recipient_number)
     update_property(property_id_receipt, recipient_number)
@@ -131,6 +141,8 @@ def send_sms(recipient_number, message):
     # Trigger the SMS sending by setting the sendSMS property to True
     update_property(property_id_send, True)
     print("SMS send triggered!")
+    
+    last_sms_time = current_time
 
 # buzzer activation
 # def update_buzzer(state):
