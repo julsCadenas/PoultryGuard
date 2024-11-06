@@ -9,10 +9,13 @@ load_dotenv()
 
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
-token_url = os.getenv('TOKEN_URL')
-base_url = os.getenv('BASE_URL')
 thing_id = os.getenv('THING_ID')
-property_id = os.getenv('PROPERTY_ID')
+# base_url = os.getenv('BASE_URL')
+property_id_send = os.getenv('PROPERTY_ID_SEND_SMS')
+property_id_receipt = os.getenv('PROPERTY_ID_RECIPIENT')
+property_id_message = os.getenv('PROPERTY_ID_MESSAGE')
+token_url = os.getenv('TOKEN_URL')
+# cloud_api_url = os.getenv('CLOUD_API_URL')
 
 # known temperature values for pixel values (for calibration)
 # knownTemperature = np.array([0, 10, 20, 30, 32, 34, 35, 35.5, 36, 36.6, 37, 37.5, 38, 38.5, 39, 39.5, 40])
@@ -94,26 +97,61 @@ def get_access_token():
             return None
     return access_token_manager.token
 
-# buzzer activation
-def update_buzzer(state):
-    access_token = get_access_token()
-    url = f'{base_url}/things/{thing_id}/properties/{property_id}/publish'
-    data = {'value': state}
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Content-Type': 'application/json'
-    }
-    try:
-        response = requests.put(url, headers=headers, json=data)
-        response.raise_for_status()
-        print(f"Buzzer {'activated' if state else 'deactivated'}!")
-    except requests.exceptions.RequestException as e:
-        print(f"Error updating buzzer: {e}")
+def update_property(property_id, value):
+    token = get_access_token()
+    if not token:
+        print("No access token available. Exiting.")
+        return
 
-def activate_buzzer():
-    update_buzzer(True)  # Activate the buzzer
-    time.sleep(3)  # Keep the buzzer on for 3 seconds
-    update_buzzer(False)  # Deactivate the buzzer
+    url = f"https://api2.arduino.cc/iot/v2/things/{thing_id}/properties/{property_id}/publish"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "value": value
+    }
+
+    response = requests.put(url, headers=headers, json=data)
+
+    if response.status_code == 200:
+        print(f"Property {property_id} updated successfully.")
+    else:
+        print(f"Failed to update property {property_id}. Status code: {response.status_code}")
+        print(response.text)
+
+# Function to send an SMS by updating the variables in the Cloud
+def send_sms(recipient_number, message):
+    # Update recipient number and message in IoT Cloud
+    print(recipient_number)
+    update_property(property_id_receipt, recipient_number)
+    update_property(property_id_message, message)
+
+    # Trigger the SMS sending by setting the sendSMS property to True
+    update_property(property_id_send, True)
+    print("SMS send triggered!")
+
+# buzzer activation
+# def update_buzzer(state):
+#     access_token = get_access_token()
+#     url = f'{base_url}/things/{thing_id}/properties/{property_id}/publish'
+#     data = {'value': state}
+#     headers = {
+#         'Authorization': f'Bearer {access_token}',
+#         'Content-Type': 'application/json'
+#     }
+#     try:
+#         response = requests.put(url, headers=headers, json=data)
+#         response.raise_for_status()
+#         print(f"Buzzer {'activated' if state else 'deactivated'}!")
+#     except requests.exceptions.RequestException as e:
+#         print(f"Error updating buzzer: {e}")
+
+# def activate_buzzer():
+#     update_buzzer(True)  # Activate the buzzer
+#     time.sleep(3)  # Keep the buzzer on for 3 seconds
+#     update_buzzer(False)  # Deactivate the buzzer
 
 def control_relay(arduino, command):
     global last_activation_time

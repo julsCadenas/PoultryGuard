@@ -63,14 +63,14 @@ def thermal_feed():
     return Response(thermalStream(webcam, thermalCamera, model),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# @app.route('/status')
-# def get_status():
-#     return jsonify({
-#         'phoneNumber': phoneNumber,
-#         'arduinoStatus': arduinoStatus,
-#         'gsmStatus': gsmStatus,
-#         'tempThreshold': tempThreshold
-#     })
+@app.route('/status')
+def get_status():
+    return jsonify({
+        'phoneNumber': phoneNumber,
+        'arduinoStatus': arduinoStatus,
+        'gsmStatus': gsmStatus,
+        'tempThreshold': tempThreshold
+    })
 
 # Flask server control in a separate thread
 def runFlask():
