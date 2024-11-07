@@ -42,7 +42,7 @@ distanceThreshold = 300
 serverThread = None
 
 try:
-    arduino = serial.Serial('COM8', 9600, timeout=1)
+    arduino = serial.Serial('COM10', 9600, timeout=1)
     time.sleep(2)  # Wait for the connection to establish
 except serial.SerialException as e:
     arduino = None
@@ -63,14 +63,14 @@ def thermal_feed():
     return Response(thermalStream(webcam, thermalCamera, model),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/status')
-def get_status():
-    return jsonify({
-        'phoneNumber': phoneNumber,
-        'arduinoStatus': arduinoStatus,
-        'gsmStatus': gsmStatus,
-        'tempThreshold': tempThreshold
-    })
+# @app.route('/status')
+# def get_status():
+#     return jsonify({
+#         'phoneNumber': phoneNumber,
+#         'arduinoStatus': arduinoStatus,
+#         'gsmStatus': gsmStatus,
+#         'tempThreshold': tempThreshold
+#     })
 
 # Flask server control in a separate thread
 def runFlask():

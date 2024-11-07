@@ -59,8 +59,8 @@ def thermalStream(webcam, thermalCamera, model):
                 maxPixelValue = np.max(boundingBoxThermal)
                 chickenTemperature = pixelToTemperature(maxPixelValue)  # Calculate pixel to temperature data
                 # Print the temperature number
-                cv2.putText(thermalImageColored, f'Temp: {chickenTemperature:.2f} C', 
-                            (thermalX1, thermalY1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                # cv2.putText(thermalImageColored, f'Temp: {chickenTemperature:.2f} C', 
+                #             (thermalX1, thermalY1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         ret, jpeg = cv2.imencode('.jpg', thermalImageColored)
         frame = jpeg.tobytes()

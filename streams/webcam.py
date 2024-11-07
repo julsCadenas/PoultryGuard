@@ -56,6 +56,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold):
     global videoWriter, last_activation_time, relay_activated
+    # global tempThreshold
 
     # Get the access token for Arduino IoT
     access_token = get_access_token()
@@ -69,27 +70,30 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
         frame_size = (frameWebcam.shape[1], frameWebcam.shape[0])
         start_video_recording(frame_size)
 
-    # Dictionary to track isolation start times for each detection
+    
     isolation_start_time = {}
-
     while True:
         retWebcam, frameWebcam = webcam.read()
         if not retWebcam:
             break
 
+        # Store the detections in a variable
         results = model.predict(source=frameWebcam)
         detections = results[0].boxes
         isolatedFlags = [True] * len(detections)
         temperatures = []
-        current_time = time.time()
 
+        # Initialize high_temp_detected flag
         high_temp_detected = False
 
         for i, box in enumerate(detections):
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+            # Drawing the bounding box and label on the frame
             cv2.rectangle(frameWebcam, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frameWebcam, "Chicken", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(frameWebcam, "Chicken", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
+            # Calculate temperature using thermal camera coordinates
             thermalX1 = int(x1 * (thermalCamera.get(cv2.CAP_PROP_FRAME_WIDTH) / frameWebcam.shape[1]))
             thermalY1 = int(y1 * (thermalCamera.get(cv2.CAP_PROP_FRAME_HEIGHT) / frameWebcam.shape[0]))
             thermalX2 = int(x2 * (thermalCamera.get(cv2.CAP_PROP_FRAME_WIDTH) / frameWebcam.shape[1]))
@@ -109,59 +113,86 @@ def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThresho
 
                     if isinstance(chickenTemperature, (int, float)) and isinstance(tempThreshold, (int, float)):
                         if chickenTemperature > tempThreshold:
-                            high_temp_detected = True
+                            high_temp_detected = True  # Flag to keep the relay on
                             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                             filename = os.path.join(saveFolder, f'frame_{timestamp}.jpg')
                             cv2.imwrite(filename, frameWebcam)
-                        
+
+                        # Log the event
                         with open(csvFile, mode='a', newline='') as file:
                             writer = csv.writer(file)
                             writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", f'{chickenTemperature:.2f}', relay_activated, False, False])
+                    
+                    else:
+                        print(f"Type mismatch: chickenTemperature={chickenTemperature}, tempThreshold={tempThreshold}")
                 else:
                     temperatures.append(None)
             else:
                 temperatures.append(None)
 
-        for i in range(len(detections)):
-            for j in range(len(detections)):
-                if i != j:
-                    x1, y1, _, _ = map(int, detections[i].xyxy[0].tolist())
-                    x2, y2, _, _ = map(int, detections[j].xyxy[0].tolist())
-                    dist = euclideanDistance([x1, y1], [x2, y2])
-                    if dist < distanceThreshold:
-                        isolatedFlags[i] = False
-                        isolatedFlags[j] = False
+        # Relay activation based on high_temp_detected flag
+        current_time = time.time()
+        if high_temp_detected:
+            if (current_time - last_activation_time >= relay_cooldown) and not relay_activated:
+                arduino.write(b'1\n')  # Turn ON relay
+                print("High temperature detected. Relay ON.")
+                last_activation_time = current_time
+                relay_activated = True
+        else:
+            if relay_activated:
+                arduino.write(b'0\n')  # Turn OFF relay
+                print("Relay OFF.")
+                relay_activated = False
 
-        for idx, (box, isolated) in enumerate(zip(detections, isolatedFlags)):
-            x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+        # Checking for isolation and adding related text
+        if len(detections) == len(temperatures):
+            for i in range(len(detections)):
+                for j in range(len(detections)):
+                    if i != j:
+                        x1, y1, _, _ = map(int, detections[i].xyxy[0].tolist())
+                        x2, y2, _, _ = map(int, detections[j].xyxy[0].tolist())
+                        dist = euclideanDistance([x1, y1], [x2, y2])
+                        if dist < distanceThreshold:
+                            isolatedFlags[i] = False
+                            isolatedFlags[j] = False
 
-            if isolated:
-                if idx not in isolation_start_time:
-                    isolation_start_time[idx] = current_time
-                elif current_time - isolation_start_time[idx] >= 5:
-                    cv2.putText(frameWebcam, "Isolated", (x1, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            for idx, (box, isolated) in enumerate(zip(detections, isolatedFlags)):
+                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+
+                if isolated:
+                    cv2.putText(frameWebcam, "Isolated", (x1, y1 - 20),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                     cv2.rectangle(frameWebcam, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
                     if temperatures[idx] is not None and temperatures[idx] > tempThreshold:
                         message = "Heat stress detected"
+                        # threading.Thread(target=activate_buzzer).start()
                         threading.Thread(target=send_sms, args=(phoneNumber, message)).start()
+                        # send_sms(message, phoneNumber)
                         print("Isolated chicken detected. Buzzer activated. SMS sent")
 
                         with open(csvFile, mode='a', newline='') as file:
                             writer = csv.writer(file)
                             writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", f'{temperatures[idx]:.2f}', True, True, True])
-            else:
-                isolation_start_time.pop(idx, None)
+                    else:
+                        # Log event for isolated chickens that are not hot
+                        with open(csvFile, mode='a', newline='') as file:
+                            writer = csv.writer(file)
+                            writer.writerow([datetime.now().strftime('%Y%m%d_%H%M%S'), "None", 'N/A', False, False, False])
 
-            if temperatures[idx] is not None:
-                cv2.putText(frameWebcam, f'Temp: {temperatures[idx]:.2f} C', (x1, y1 - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                if temperatures[idx] is not None:
+                    cv2.putText(frameWebcam, f'Temp: {temperatures[idx]:.2f} C', (x1, y1 - 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
+        # Record the frame with annotations in the video
         if videoWriter is not None:
-            videoWriter.write(frameWebcam)
+            videoWriter.write(frameWebcam)  # Write the frame with boxes and text
 
+        # Yield the frame for the live stream
         ret, jpeg = cv2.imencode('.jpg', frameWebcam)
         frame = jpeg.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
-    stop_video_recording()
+# Ensure the video is saved when the program exits
+stop_video_recording()
