@@ -17,4 +17,4 @@ function updateStatus() {
         .catch(error => console.error('Error fetching status:', error));
 }
 
-// setInterval(updateStatus, 5000);
+setInterval(updateStatus, 5000);

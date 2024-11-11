@@ -22,8 +22,8 @@ model = YOLO(modelPath)
 names = model.model.names
 
 # Set the cameras
-webcam = cv2.VideoCapture(1)
-thermalCamera = cv2.VideoCapture(0)
+webcam = cv2.VideoCapture(0)
+thermalCamera = cv2.VideoCapture(1)
 
 # check cameras
 if webcam.isOpened() and thermalCamera.isOpened():
@@ -74,7 +74,7 @@ def get_status():
     })
     
 @app.route('/download_csv')
-def get_csv():
+def download_csv():
     return send_file('templogs.csv', as_attachment=True)
 
 # Flask server control in a separate thread
