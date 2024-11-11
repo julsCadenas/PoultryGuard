@@ -21,6 +21,7 @@
                 <li><a href="https://id.arduino.cc/?iss=https%3A%2F%2Flogin.arduino.cc%2F#/sso/login" rel='noreferrer' target="_blank">IOT Cloud</a></li>
                 <li><a href="{{ url_for('webcam_feed') }}" target="_blank">RGB Feed</a></li>
                 <li><a href="{{ url_for('thermal_feed') }}" target="_blank">Thermal Feed</a></li>                
+                <li><a href="{{ url_for('download_csv') }}" >Download CSV</a></li>                
             </ul>
         </nav>
     </header>   
@@ -43,8 +44,7 @@
         <h2>Status</h2>
         <p id="temp"><span class="label">Temperature Threshold:</span> <span id="temp-value"></span></p>
         <p id="phone-number"><span class="label">Saved Phone Number:</span> <span id="phone-number-value"></span></p>
-        <p id="arduino-status"><span class="label">Arduino Status:</span> <span id="arduino-status-value"></span></p>
-        <p id="gsm-status"><span class="label">GSM Status:</span> <span id="gsm-status-value"></span></p>
+        <p id="arduino-status"><span class="label">Distance Threshold:</span> <span id="arduino-status-value"></span></p>
     </div>    
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>

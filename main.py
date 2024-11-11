@@ -5,7 +5,7 @@ import time
 import webbrowser
 import serial
 from ultralytics import YOLO
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, send_file
 
 # Import functions
 from streams.thermal import thermalStream
@@ -34,8 +34,8 @@ else:
 print(cameraStatus)
 
 phoneNumber = ""
-arduinoStatus = "Not connected"
-gsmStatus = "Not connected"
+# arduinoStatus = "Not connected"
+# gsmStatus = "Not connected"
 tempThreshold = 35
 distanceThreshold = 300
 
@@ -63,19 +63,23 @@ def thermal_feed():
     return Response(thermalStream(webcam, thermalCamera, model),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# @app.route('/status')
-# def get_status():
-#     return jsonify({
-#         'phoneNumber': phoneNumber,
-#         'arduinoStatus': arduinoStatus,
-#         'gsmStatus': gsmStatus,
-#         'tempThreshold': tempThreshold
-#     })
+@app.route('/status')
+def get_status():
+    return jsonify({
+        'phoneNumber': phoneNumber,
+        'tempThreshold': tempThreshold,
+        'distanceThreshold': distanceThreshold
+        # 'arduinoStatus': arduinoStatus,
+        # 'gsmStatus': gsmStatus,
+    })
+    
+@app.route('/download_csv')
+def get_csv():
+    return send_file('templogs.csv', as_attachment=True)
 
 # Flask server control in a separate thread
 def runFlask():
     app.run(host='0.0.0.0', port=5000, debug=False)
-
 
 def startServer(startButton):
     global serverThread
