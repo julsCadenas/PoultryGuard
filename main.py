@@ -41,12 +41,12 @@ distanceThreshold = 300
 
 serverThread = None
 
-try:
-    arduino = serial.Serial('COM10', 9600, timeout=1)
-    time.sleep(2)  # Wait for the connection to establish
-except serial.SerialException as e:
-    arduino = None
-    print(f"Error: Could not open serial port: {e}")
+# try:
+#     arduino = serial.Serial('COM10', 9600, timeout=1)
+#     time.sleep(2)  # Wait for the connection to establish
+# except serial.SerialException as e:
+#     arduino = None
+#     print(f"Error: Could not open serial port: {e}")
 
 # Flask routes
 @app.route('/')
@@ -55,7 +55,7 @@ def index():
 
 @app.route('/webcam_feed')
 def webcam_feed():
-    return Response(webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold),
+    return Response(webcamStream(webcam, model, thermalCamera, phoneNumber, tempThreshold, distanceThreshold),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/thermal_feed')
