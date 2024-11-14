@@ -54,7 +54,7 @@ def signal_handler(sig, frame):
 # Attach signal handler to handle program exit
 signal.signal(signal.SIGINT, signal_handler)
 
-def webcamStream(webcam, model, thermalCamera, phoneNumber, tempThreshold, distanceThreshold):
+def webcamStream(webcam, model, thermalCamera, arduino, phoneNumber, tempThreshold, distanceThreshold):
     global videoWriter, last_activation_time, relay_activated
 
     # Get the access token for Arduino IoT
@@ -127,13 +127,13 @@ def webcamStream(webcam, model, thermalCamera, phoneNumber, tempThreshold, dista
         current_time = time.time()
         if high_temp_detected:
             if (current_time - last_activation_time >= relay_cooldown) and not relay_activated:
-                # arduino.write(b'1\n')  # Turn ON relay
+                arduino.write(b'1\n')  # Turn ON relay
                 print("High temperature detected. Relay ON.")
                 last_activation_time = current_time
                 relay_activated = True
         else:
             if relay_activated:
-                # arduino.write(b'0\n')  # Turn OFF relay
+                arduino.write(b'0\n')  # Turn OFF relay
                 print("Relay OFF.")
                 relay_activated = False
 
