@@ -4,10 +4,10 @@
 POULTRYGUARD is a heat stress monitoring system designed for poultry farms. It uses real-time data collection and analysis to detect heat stress in poultry, allowing farmers to take proactive measures to ensure the health and well-being of their livestock.
 
 ## **Team Members**
-- Julian Sebastian Cadenas
-- Joshua Cormier
-- Daryl Guerzon
-- Christian Lawrence Javier
+- [Julian Sebastian Cadenas](https://www.linkedin.com/in/julian-cadenas/) | [GitHub](https://github.com/julsCadenas)
+- [Joshua Cormier](https://www.linkedin.com/in/joshua-cormier-613802328/) | [GitHub](https://github.com/Tetsuii)
+- [Daryl Guerzon](https://www.linkedin.com/in/daryl-guerzon-0a980b212/) | [GitHub](https://github.com/ChristianLFJ)
+- [Christian Lawrence Javier](https://www.linkedin.com/in/christianlawrencejavier/) | [GitHub](https://github.com/DarealGuerzon)
 
 ## **Features**
 - Real-time monitoring of chickens.
