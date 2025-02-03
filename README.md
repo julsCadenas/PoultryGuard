@@ -19,6 +19,9 @@ POULTRYGUARD is a heat stress monitoring system designed for poultry farms. It u
 - Monitor the chickens through the website.
 
 ## **Technology**
+<p align="left">
+  <img src="https://skillicons.dev/icons?i=python,opencv,numpy,tkinter,arduino,flask" />
+</p>
 - **Python** as the primary programming language.
 - Fine-tuned a **YOLOv8n model** using a custom dataset collected by the researchers.
 - **Computer Vision (OpenCV)** used to detect chickens with the model.
