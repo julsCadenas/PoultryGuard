@@ -3,6 +3,8 @@
 ## **Project Overview**
 POULTRYGUARD is a heat stress monitoring system designed for poultry farms. It uses real-time data collection and analysis to detect heat stress in poultry, allowing farmers to take proactive measures to ensure the health and well-being of their livestock.
 
+**Note:** Our repo for drafts and miscellaneous files is [here](https://github.com/julsCadenas/PoultryGuard-Misc)
+
 ## **Team Members**
 - Julian Sebastian Cadenas | [LinkedIn](https://www.linkedin.com/in/julian-cadenas/) | [GitHub](https://github.com/julsCadenas)
 - Joshua Cormier | [LinkedIn](https://www.linkedin.com/in/joshua-cormier-613802328/) | [GitHub](https://github.com/Tetsuii)
@@ -37,5 +39,3 @@ POULTRYGUARD is a heat stress monitoring system designed for poultry farms. It u
 - 5V Relay Module
 - Sim800L v2 Board
 - Buzzer
-
-**Note:** Our repo for drafts and miscellaneous files is [here](https://github.com/julsCadenas/PoultryGuard-Misc)
