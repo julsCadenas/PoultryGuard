@@ -37,3 +37,5 @@ POULTRYGUARD is a heat stress monitoring system designed for poultry farms. It u
 - 5V Relay Module
 - Sim800L v2 Board
 - Buzzer
+
+**Note:** Our repo for drafts and miscellaneous files is [here](https://github.com/julsCadenas/PoultryGuard-Misc)
